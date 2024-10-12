@@ -1,6 +1,8 @@
 const express = require('express');
 const { Todo } = require('../mongo');
 const router = express.Router();
+const redis = require('../redis');
+const { incrementRedisCounter, decrementRedisCounter } = require('../util');
 
 /* GET todos listing. */
 router.get('/', async (_, res) => {
@@ -10,17 +12,35 @@ router.get('/', async (_, res) => {
 
 /* POST todo to listing. */
 router.post('/', async (req, res) => {
-  const todo = await Todo.create({
-    text: req.body.text,
-    done: false,
-  });
-  res.send(todo);
+  try {
+    if (!redis.incrAsync) {
+      console.error('Redis is not connected');
+      return res.status(500).send({ error: 'Redis is not connected' });
+    }
+
+    await incrementRedisCounter();
+
+    const todo = await Todo.create({
+      text: req.body.text,
+      done: false,
+    });
+
+    res.send(todo);
+  } catch (err) {
+    console.error('Error during POST /todos:', err);
+    res.status(500).send({ error: 'Failed to add todo' });
+  }
 });
 
 const singleRouter = express.Router();
 
 const findByIdMiddleware = async (req, res, next) => {
   const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).send({ error: 'Invalid ID format' });
+  }
+
   req.todo = await Todo.findById(id);
   if (!req.todo) return res.sendStatus(404);
 
@@ -28,14 +48,22 @@ const findByIdMiddleware = async (req, res, next) => {
 };
 
 /* DELETE todo. */
-singleRouter.delete('/', async (req, res) => {
-  await req.todo.delete();
-  res.sendStatus(200);
-});
+router.delete('/:id', async (req, res) => {
+  try {
+    const todo = await Todo.findById(req.params.id);
 
-/* GET todo by ID. */
-singleRouter.get('/', async (req, res) => {
-  res.json(req.todo);
+    if (!todo) {
+      return res.status(404).send({ error: 'Todo not found' });
+    }
+
+    await todo.remove();
+    await decrementRedisCounter();
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Error during DELETE /todos:', err);
+    res.status(500).send({ error: 'Failed to delete todo' });
+  }
 });
 
 /* PUT todo by ID. */
