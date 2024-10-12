@@ -5,11 +5,11 @@ const cors = require('cors');
 const indexRouter = require('./routes/index');
 const todosRouter = require('./routes/todos');
 const statisticsRouter = require('./routes/statistics');
-const { syncRedisWithMongo } = require('./util');
+// const { syncRedisWithMongo } = require('./util');
 
 const app = express();
 
-syncRedisWithMongo();
+// syncRedisWithMongo();
 
 app.use(cors());
 
