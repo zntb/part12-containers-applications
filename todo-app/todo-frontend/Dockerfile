@@ -1,27 +1,20 @@
-FROM node:20
+FROM node:20-alpine AS build
 
 WORKDIR /usr/src/app
 
-# Copy package.json and lock files first
-COPY package*.json ./
-
-# Install dependencies
-RUN npm ci
-
-# Set VITE_BACKEND_URL for the build process
-ENV VITE_BACKEND_URL="http://localhost:3000/"
-
-# Copy the rest of the application
 COPY . .
 
-# Build the frontend
+RUN npm ci
+
+ENV VITE_BACKEND_URL="http://localhost:3000"
+
+RUN npm run test
+
 RUN npm run build
 
-# Install a lightweight static server to serve the built files
-RUN npm install -g serve
+FROM nginx:1.25-alpine
 
-# Expose port 3000
-EXPOSE 3000
+COPY --from=build /usr/src/app/dist /usr/share/nginx/html
 
-# Serve the application
-CMD ["serve", "-s", "dist", "-l", "3000"]
+
+
