@@ -12,7 +12,7 @@ const TodoList = ({ todos, deleteTodo, completeTodo }) => {
             completeTodo={completeTodo}
           />
         ))
-        .reduce((acc, cur) => [...acc, <hr key={cur.key} />, cur], [])}
+        .reduce((acc, cur) => [...acc, <hr key={cur} />, cur], [])}
     </>
   );
 };
