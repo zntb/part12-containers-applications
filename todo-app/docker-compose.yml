@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: reverse-proxy
+    ports:
+      - 8080:80
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+      - server
+    networks:
+      - todo-network
+
+  server:
+    image: todo-backend
+    build:
+      context: ./todo-backend
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - MONGO_URL=mongodb://the_username:the_password@mongo:27017/the_database
+    networks:
+      - todo-network
+
+  app:
+    image: todo-frontend
+    build:
+      context: ./todo-frontend
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - VITE_BACKEND_URL=http://localhost:8080/api/
+    networks:
+      - todo-network
+
+  mongo:
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: the_username
+      MONGO_INITDB_ROOT_PASSWORD: the_password
+      MONGO_INITDB_DATABASE: the_database
+    volumes:
+      - ./todo-backend/mongo_data:/data/db
+    networks:
+      - todo-network
+
+  redis:
+    image: redis:latest
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - ./todo-backend/redis_data:/data
+    networks:
+      - todo-network
+
+networks:
+  todo-network:
+    driver: bridge
+
+volumes:
+  mongo_data:
+  redis_data:
