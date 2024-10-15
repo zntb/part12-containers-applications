@@ -6,7 +6,7 @@ COPY . .
 
 RUN npm ci
 
-ENV VITE_BACKEND_URL="http://localhost:3003"
+ENV VITE_BACKEND_URL="http://localhost:8080"
 
 RUN npm run test
 

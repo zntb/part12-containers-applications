@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  app:
+    image: bloglist-frontend-dev
+    build:
+      context: ./bloglist-frontend
+      dockerfile: dev.Dockerfile
+    volumes:
+      - ./bloglist-frontend:/usr/src/app
+    ports:
+      - 5173:5173
+    container_name: bloglist-front-dev
+    environment:
+      - VITE_BACKEND_URL=http://localhost:8080
+
+  server:
+    image: bloglist-backend-dev
+    build:
+      context: ./bloglist-backend
+      dockerfile: ./dev.Dockerfile
+    volumes:
+      - ./bloglist-backend:/usr/src/app
+    env_file:
+      - ./bloglist-backend/.env
+    ports:
+      - 3003:3003
+    container_name: bloglist-back-dev
+
+  nginx:
+    image: nginx:1.20.1
+    volumes:
+      - ./nginx.dev.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - 8080:80
+    container_name: bloglist-reverse-proxy
+    depends_on:
+      - app
+      - server
+    command: nginx -g 'daemon off;'

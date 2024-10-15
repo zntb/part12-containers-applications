@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: bloglist-reverse-proxy
+    ports:
+      - 8080:80
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+      - server
+    networks:
+      - bloglist-network
+
+  server:
+    image: bloglist-backend
+    build:
+      context: ./bloglist-backend
+      dockerfile: Dockerfile
+    env_file:
+      - ./bloglist-backend/.env
+    environment:
+      - NODE_ENV=production
+    networks:
+      - bloglist-network
+
+  app:
+    image: bloglist-frontend
+    build:
+      context: ./bloglist-frontend
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - VITE_BACKEND_URL=http://localhost:8080
+    networks:
+      - bloglist-network
+
+networks:
+  bloglist-network:
+    driver: bridge
