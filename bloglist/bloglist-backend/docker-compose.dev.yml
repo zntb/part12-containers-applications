@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  server:
+    image: bloglist-backend-dev
+    build:
+      context: .
+      dockerfile: ./dev.Dockerfile
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - 3003:3003
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - PORT=3003
+      - SECRET=${SECRET}

@@ -1,0 +1,6 @@
+services:
+  app:
+    image: bloglist-backend
+    build: .
+    ports:
+      - 3003:3003
