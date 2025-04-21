@@ -1,4 +1,4 @@
-FROM node:20.19.0-bullseye-slim
+FROM node:20.19.0-bookworm-slim
 
 WORKDIR /usr/src/app
 
